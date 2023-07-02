@@ -1,17 +1,22 @@
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
 
-enum Waveform { SAW };
+#include "event_bus.h"
 
+//enum Waveform { SAW };
+//
+//typedef struct {
+//    float hz;
+//    float attack, sustain, decay, release;
+//    enum Waveform waveform;
+//} MTInstrument;
+//
+//typedef struct {
+//
+//} MTEnvironment;
 typedef struct {
-    float hz;
-    float attack, sustain, decay, release;
-    enum Waveform waveform;
-} MTInstrument;
-
-typedef struct {
-
-} MTEnvironment;
+    EventBus* event_bus;
+} EvaluationContext;
 
 enum ExpressionType {
     LIST_EXPR, INTEGER_EXPR, FLOAT_EXPR, ATOM_EXPR, IDENTIFIER_EXPR, QUOTED_EXPR
@@ -20,22 +25,15 @@ enum ExpressionType {
 struct ExpressionListNode;
 
 union ExpressionValue {
-        int int_value;
-        float float_value;
-        char* str_value;
-        struct ExpressionListNode* expression_list;
-        struct Expression* quoted_expression;
+    int int_value;
+    float float_value;
+    char* str_value;
+    struct ExpressionListNode* expression_list;
+    struct Expression* quoted_expression;
 };
 
 typedef struct Expression {
     enum ExpressionType expression_type;
-    //union {
-    //    int int_value;
-    //    float float_value;
-    //    char* str_value;
-    //    struct ExpressionListNode* expression_list;
-    //    struct Expression* quoted_expression;
-    //} value;
     union ExpressionValue value;
 } Expression;
 
@@ -56,6 +54,11 @@ void expression_list_node_insert(
 void expression_list_node_free(ExpressionListNode* parent);
 
 void expression_print(Expression* expression);
-Expression* expression_evaluate(Expression* expression);
+Expression* expression_evaluate(
+    Expression* expression,
+    EvaluationContext* evaluation_context
+);
+
+EvaluationContext evaluation_context_new(EventBus* event_bus);
 
 #endif

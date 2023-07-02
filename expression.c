@@ -1,5 +1,6 @@
 #include "expression.h"
 #include "util.h"
+#include "notes.h"
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
@@ -140,16 +141,20 @@ expression_list_node_insert(
 void
 expression_list_node_free(ExpressionListNode* parent)
 {
-    while ((parent = parent->next) != NULL)
+    while (parent != NULL)
     {
         expression_free(parent->expression);
+        ExpressionListNode* new_parent = parent->next;
         SAFE_FREE(parent);
+        parent = new_parent;
     }
 }
 
 static Expression*
-expression_evaluate_list(Expression* expression)
-{
+expression_evaluate_list(
+    Expression* expression,
+    EvaluationContext* evaluation_context
+) {
     ExpressionListNode* parent = expression->value.expression_list;
 
     if (parent == NULL)
@@ -165,31 +170,68 @@ expression_evaluate_list(Expression* expression)
         assert(false);
     }
 
-    if (strcmp(parent->expression->value.str_value, "let") == 0)
+    if (strcmp(parent->expression->value.str_value, "play") != 0)
     {
-        puts("let called");
+        return NULL;
+//        puts("let called");
     }
 
     ExpressionListNode* remainder = parent->next;
+    char* atom_value = remainder->expression->value.str_value;
 
+    // TODO: temporary testing code
+    float hz = 0;
+    if (strcmp(atom_value, "C3") == 0)
+    {
+        hz = NOTE_C3;
+    }
+    else if (strcmp(atom_value, "D4") == 0)
+    {
+        hz = NOTE_D4;
+    }
+    else
+    {
+        return NULL;
+    }
+
+    event_bus_notify(
+        evaluation_context->event_bus,
+        (EventMessage){
+            .type = EVENT_NOTE_ENABLE,
+            .event.note_enable = (EventNoteEnable){
+                .amplitude = 0.8f,
+                .hz = hz
+            }
+        }
+    );
+
+    return NULL;
     // TODO: rest implementeren
-    assert(false);
+    //assert(false);
 }
 
 static Expression*
-expression_evaluate_identifier(Expression* expression)
-{
+expression_evaluate_identifier(
+    Expression* expression,
+    EvaluationContext* evaluation_context
+) {
     // TODO
     assert(false);
 }
 
+// TODO: die synth verder uitbreiden (ASDR laten werken)
+// TODO: eventbus maken
+// TODO: tijdens evaluation messsages op eventbus zetten
+// TODO: synth deze messages laten pollen
 Expression*
-expression_evaluate(Expression* expression)
-{
+expression_evaluate(
+    Expression* expression,
+    EvaluationContext* evaluation_context
+) {
     switch (expression->expression_type)
     {
         case LIST_EXPR:
-            return expression_evaluate_list(expression);
+            return expression_evaluate_list(expression, evaluation_context);
         case INTEGER_EXPR:
             return expression;
         case FLOAT_EXPR:
@@ -197,11 +239,19 @@ expression_evaluate(Expression* expression)
         case ATOM_EXPR:
             return expression;
         case IDENTIFIER_EXPR:
-            return expression_evaluate_identifier(expression);
+            return expression_evaluate_identifier(
+                expression, evaluation_context
+            );
         case QUOTED_EXPR:
             return expression;
         default:
             // TODO: comment
             assert(false);
     }
+}
+
+EvaluationContext
+evaluation_context_new(EventBus* event_bus)
+{
+    return (EvaluationContext){ .event_bus = event_bus };
 }
