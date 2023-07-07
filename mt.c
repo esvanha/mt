@@ -43,14 +43,24 @@ main(int argc, char* argv[])
         ))\
         (play-loop :looper-a)\
     ";
+    char* str_b = "\
+        (play :D4)\
+        (sleep 1)\
+        (play :C4)\
+        (sleep 1)\
+        (play :B4)\
+        (sleep 1)\
+        (play :C4)\
+        (sleep 1)\
+    ";
 
     // TODO: aan lexer toevoegn dat er geen whitespace voor EOF hoeft te staan
-    Lexer lexer = lexer_new("(play :C3) "); //str);
+    Lexer lexer = lexer_new(str_b); //str);
     Parser parser = parser_new(&lexer);
 
     audio_system_start();
 
-    Expression* expression = parser_parse_expression(&parser);
+    Expression* expression = parser_parse_program(&parser);
     EvaluationContext context = evaluation_context_new(&event_bus);
     expression_evaluate(expression, &context);
 

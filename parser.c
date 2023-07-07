@@ -104,42 +104,22 @@ parser_parse_list(Parser *parser)
 {
     parser_expect(parser, L_PAREN);
 
-    ExpressionListNode* parent_node = NULL;
-    ExpressionListNode* current_node = NULL;
+    ExpressionListBuilder list_builder = expression_list_builder_new();
 
     // TODO: enum values powers of 2 maken zodat je END_OF_INPUT | R_PAREN kunt doen?
     while (
         !parser_accept(parser, END_OF_INPUT)
         && !parser_accept(parser, R_PAREN)
     ) {
-        ExpressionListNode* new_node = malloc(sizeof(ExpressionListNode));
-        if (new_node == NULL)
-        {
-            // TODO: error returnen
-            assert(false);
-        }
-
-        new_node->expression = parser_parse_expression(parser);
-        new_node->next = NULL;
-
-        if (parent_node == NULL && current_node == NULL)
-        {
-            parent_node = new_node;
-            current_node = parent_node;
-        }
-        else
-        {
-            current_node->next = new_node;
-            current_node = new_node;
-        }
+        expression_list_builder_add(
+            &list_builder,
+            parser_parse_expression(parser)
+        );
     }
 
     parser_expect(parser, R_PAREN);
 
-    return expression_new(
-        LIST_EXPR,
-        (union ExpressionValue) { .expression_list = parent_node }
-    );
+    return expression_list_builder_build_expr(&list_builder);
 }
 
 static Expression*
@@ -222,6 +202,27 @@ parser_parse_expression(Parser* parser)
         assert(false);
         // TODO: error
     }
+}
+
+Expression*
+parser_parse_program(Parser* parser)
+{
+    ExpressionListBuilder list_builder = expression_list_builder_new();
+
+    while (!parser_accept(parser, END_OF_INPUT))
+    {
+        expression_list_builder_add(
+            &list_builder,
+            parser_parse_expression(parser)
+        );
+    }
+
+    return expression_new(
+        PROGRAM_EXPR,
+        (union ExpressionValue){
+            .expression_list = expression_list_builder_build_node(&list_builder)
+        }
+    );
 }
 
 void

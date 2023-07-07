@@ -6,6 +6,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
+#include <raylib.h>
 
 Expression* expression_new(
     enum ExpressionType type,
@@ -170,6 +171,14 @@ expression_evaluate_list(
         assert(false);
     }
 
+    if (strcmp(parent->expression->value.str_value, "sleep") == 0)
+    {
+        puts("yas");
+        sleep(parent->next->expression->value.int_value);
+        puts("huh");
+        return NULL;
+    }
+
     if (strcmp(parent->expression->value.str_value, "play") != 0)
     {
         return NULL;
@@ -181,13 +190,17 @@ expression_evaluate_list(
 
     // TODO: temporary testing code
     float hz = 0;
-    if (strcmp(atom_value, "C3") == 0)
+    if (strcmp(atom_value, "C4") == 0)
     {
-        hz = NOTE_C3;
+        hz = NOTE_C4;
     }
     else if (strcmp(atom_value, "D4") == 0)
     {
         hz = NOTE_D4;
+    }
+    else if (strcmp(atom_value, "B4") == 0)
+    {
+        hz = NOTE_B4;
     }
     else
     {
@@ -219,6 +232,25 @@ expression_evaluate_identifier(
     assert(false);
 }
 
+static Expression*
+expression_evaluate_program(
+    Expression* expression,
+    EvaluationContext* evaluation_context
+) {
+    ExpressionListNode* parent_node = expression->value.expression_list;
+    while (parent_node != NULL)
+    {
+        expression_evaluate(parent_node->expression, evaluation_context);
+
+        ExpressionListNode* old_parent = parent_node;
+        parent_node = parent_node->next;
+        SAFE_FREE(old_parent);
+    }
+
+    // TODO: empty list returnen?
+    return NULL;
+}
+
 // TODO: die synth verder uitbreiden (ASDR laten werken)
 // TODO: eventbus maken
 // TODO: tijdens evaluation messsages op eventbus zetten
@@ -244,6 +276,8 @@ expression_evaluate(
             );
         case QUOTED_EXPR:
             return expression;
+        case PROGRAM_EXPR:
+            return expression_evaluate_program(expression, evaluation_context);
         default:
             // TODO: comment
             assert(false);
@@ -254,4 +288,56 @@ EvaluationContext
 evaluation_context_new(EventBus* event_bus)
 {
     return (EvaluationContext){ .event_bus = event_bus };
+}
+
+ExpressionListBuilder
+expression_list_builder_new()
+{
+    return (ExpressionListBuilder){
+        .current_node = NULL,
+        .parent_node = NULL
+    };
+}
+
+void
+expression_list_builder_add(
+    ExpressionListBuilder* builder,
+    Expression* expression
+)
+{
+    ExpressionListNode* new_node = malloc(sizeof(ExpressionListBuilder));
+    if (new_node == NULL)
+    {
+        // TODO: error returnen
+        assert(false);
+    }
+
+    new_node->expression = expression;
+    new_node->next = NULL;
+
+    if (builder->parent_node == NULL && builder->current_node == NULL)
+    {
+        builder->parent_node = new_node;
+        builder->current_node = builder->parent_node;
+    }
+    else
+    {
+        builder->current_node->next = new_node;
+        builder->current_node = new_node;
+    }
+}
+
+ExpressionListNode*
+expression_list_builder_build_node(ExpressionListBuilder* builder)
+{
+    return builder->parent_node;
+}
+
+Expression*
+expression_list_builder_build_expr(ExpressionListBuilder* builder)
+{
+    return expression_new(
+        LIST_EXPR,
+        (union ExpressionValue){ .expression_list = builder->parent_node }
+    );
 }

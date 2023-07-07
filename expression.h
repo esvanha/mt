@@ -19,7 +19,8 @@ typedef struct {
 } EvaluationContext;
 
 enum ExpressionType {
-    LIST_EXPR, INTEGER_EXPR, FLOAT_EXPR, ATOM_EXPR, IDENTIFIER_EXPR, QUOTED_EXPR
+    PROGRAM_EXPR, LIST_EXPR, INTEGER_EXPR, FLOAT_EXPR, ATOM_EXPR,
+    IDENTIFIER_EXPR, QUOTED_EXPR
 };
 
 struct ExpressionListNode;
@@ -60,5 +61,23 @@ Expression* expression_evaluate(
 );
 
 EvaluationContext evaluation_context_new(EventBus* event_bus);
+
+/**
+ * ExpressionListBuilder
+ */
+typedef struct {
+    ExpressionListNode* parent_node;
+    ExpressionListNode* current_node;
+} ExpressionListBuilder;
+
+ExpressionListBuilder expression_list_builder_new();
+void expression_list_builder_add(
+    ExpressionListBuilder* builder,
+    Expression* expression
+);
+ExpressionListNode* expression_list_builder_build_node(
+    ExpressionListBuilder* builder
+);
+Expression* expression_list_builder_build_expr(ExpressionListBuilder* builder);
 
 #endif

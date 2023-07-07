@@ -13,6 +13,7 @@ typedef struct {
 
 Parser parser_new(Lexer* lexer);
 Expression* parser_parse_expression(Parser* parser);
+Expression* parser_parse_program(Parser* parser);
 void parser_free(Parser* parser);
 
 #endif
