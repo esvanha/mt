@@ -17,7 +17,7 @@ typedef struct {
     bool note_enabled;
 } ADSREnvelope;
 
-ADSREnvelope* adsr_envelope_new();
+ADSREnvelope* adsr_envelope_new(void);
 void adsr_envelope_enable_note(ADSREnvelope* adsr_envelope, float time_on_ms);
 void adsr_envelope_disable_note(ADSREnvelope* adsr_envelope, float time_off_ms);
 float adsr_envelope_amplitude(ADSREnvelope* adsr_envelope, float time_ms);

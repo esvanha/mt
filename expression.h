@@ -54,7 +54,7 @@ void expression_list_node_insert(
 );
 void expression_list_node_free(ExpressionListNode* parent);
 
-void expression_print(Expression* expression);
+void expression_print(const Expression* expression);
 Expression* expression_evaluate(
     Expression* expression,
     EvaluationContext* evaluation_context
@@ -70,14 +70,16 @@ typedef struct {
     ExpressionListNode* current_node;
 } ExpressionListBuilder;
 
-ExpressionListBuilder expression_list_builder_new();
+ExpressionListBuilder expression_list_builder_new(void);
 void expression_list_builder_add(
     ExpressionListBuilder* builder,
     Expression* expression
 );
 ExpressionListNode* expression_list_builder_build_node(
-    ExpressionListBuilder* builder
+    const ExpressionListBuilder* builder
 );
-Expression* expression_list_builder_build_expr(ExpressionListBuilder* builder);
+Expression* expression_list_builder_build_expr(
+    const ExpressionListBuilder* builder
+);
 
 #endif

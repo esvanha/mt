@@ -64,17 +64,11 @@ audio_system_stop(void)
     CloseAudioDevice();
 }
 
-static inline double
-hz_to_angular_velocity(double hertz)
-{
-    return hertz * 2.0 * PI;
-}
-
-static double
-oscillator(double hz, double time)
-{
-    return sin(hz * time);
-}
+//static double
+//oscillator(double hz, double time)
+//{
+//    return sin(hz * time);
+//}
 
 float phase = 0.0f;
 ADSREnvelope* adsr_envelope = NULL;

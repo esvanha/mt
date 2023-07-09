@@ -4,6 +4,6 @@
 
 #define SAFE_FREE(x) do { free(x); (x) = NULL; } while (0)
 
-char* dupstr(char* str);
+char* dupstr(const char* str);
 
 #endif

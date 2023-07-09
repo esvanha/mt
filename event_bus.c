@@ -5,7 +5,7 @@
 #include <string.h>
 
 EventBus
-event_bus_new()
+event_bus_new(void)
 {
     return (EventBus){
         .front = NULL,

@@ -4,7 +4,7 @@
 #include <assert.h>
 
 char*
-dupstr(char* str)
+dupstr(const char* str)
 {
     size_t length = strlen(str) + 1;
 

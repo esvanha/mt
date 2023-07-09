@@ -11,7 +11,7 @@
  *  A   D   S    R 
  */
 ADSREnvelope*
-adsr_envelope_new()
+adsr_envelope_new(void)
 {
     ADSREnvelope* adsr_envelope = malloc(sizeof(ADSREnvelope));
     if (adsr_envelope == NULL)

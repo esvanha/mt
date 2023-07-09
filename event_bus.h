@@ -35,7 +35,7 @@ typedef struct {
     EventBusItem* rear;
 } EventBus;
 
-EventBus event_bus_new();
+EventBus event_bus_new(void);
 bool event_bus_poll(EventBus* event_bus, EventMessage** event_message);
 void event_bus_notify(EventBus* event_bus, EventMessage event_message);
 void event_bus_free(EventBus* event_bus);

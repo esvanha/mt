@@ -18,13 +18,13 @@
  */
 
 int
-main(int argc, char* argv[])
+main(__attribute__((unused)) int argc, __attribute__((unused)) char* argv[])
 {
     EventBus event_bus = event_bus_new();
 
     audio_system_initialize(44100, &event_bus);
 
-    char* str = "\
+/*    char* str = "\
         (let :basic-synth\
             (make-instrument\
                 :attack 0.345\
@@ -42,7 +42,7 @@ main(int argc, char* argv[])
             (play :basic-synth :A5)\
         ))\
         (play-loop :looper-a)\
-    ";
+    ";*/
     char* str_b = "\
         (play :D4)\
         (sleep 1)\

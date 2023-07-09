@@ -8,10 +8,9 @@
 #include <stdio.h>
 #include <unistd.h>
 
-Expression* expression_new(
-    enum ExpressionType type,
-    union ExpressionValue value
-) {
+Expression*
+expression_new(enum ExpressionType type, union ExpressionValue value)
+{
     Expression* expression = malloc(sizeof(Expression));
     if (expression == NULL)
     {
@@ -55,7 +54,7 @@ expression_type_print(enum ExpressionType expression_type)
 }
 
 void
-expression_print(Expression* expression)
+expression_print(const Expression* expression)
 {
     printf("Expression(");
 
@@ -82,7 +81,9 @@ expression_print(Expression* expression)
             printf("%d", expression->value.int_value);
             break;
         case FLOAT_EXPR:
-            printf("%f", expression->value.float_value);
+            //.. Explicitly cast to double to surpress double promotion
+            //   warning.
+            printf("%f", (double)expression->value.float_value);
             break;
         case ATOM_EXPR:
             printf(":%s", expression->value.str_value);
@@ -115,6 +116,7 @@ expression_free(Expression* expression)
             break;
         default:
             //.. Nothing to be freed
+            break;
     }
 
     SAFE_FREE(expression);
@@ -225,8 +227,8 @@ expression_evaluate_list(
 
 static Expression*
 expression_evaluate_identifier(
-    Expression* expression,
-    EvaluationContext* evaluation_context
+    __attribute__((unused)) Expression* expression,
+    __attribute__((unused)) EvaluationContext* evaluation_context
 ) {
     // TODO
     assert(false);
@@ -291,7 +293,7 @@ evaluation_context_new(EventBus* event_bus)
 }
 
 ExpressionListBuilder
-expression_list_builder_new()
+expression_list_builder_new(void)
 {
     return (ExpressionListBuilder){
         .current_node = NULL,
@@ -328,13 +330,13 @@ expression_list_builder_add(
 }
 
 ExpressionListNode*
-expression_list_builder_build_node(ExpressionListBuilder* builder)
+expression_list_builder_build_node(const ExpressionListBuilder* builder)
 {
     return builder->parent_node;
 }
 
 Expression*
-expression_list_builder_build_expr(ExpressionListBuilder* builder)
+expression_list_builder_build_expr(const ExpressionListBuilder* builder)
 {
     return expression_new(
         LIST_EXPR,

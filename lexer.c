@@ -17,7 +17,7 @@
 //}
 
 void
-token_print(Token* token)
+token_print(const Token* token)
 {
     fputs("Token(", stdout);
 
@@ -36,7 +36,9 @@ token_print(Token* token)
             printf("INTEGER_LITERAL, %d)\n", token->value.int_value);
             break;
         case FLOAT_LITERAL:
-            printf("FLOAT_LITERAL, %f)\n", token->value.float_value);
+            //.. Explicitly cast to double to surpress double promotion
+            //   warning.
+            printf("FLOAT_LITERAL, %f)\n", (double)token->value.float_value);
             break;
         case ATOM:
             printf("ATOM, %s)\n", token->value.str_value);
@@ -62,7 +64,7 @@ token_print(Token* token)
 //}
 
 Lexer
-lexer_new(char* input)
+lexer_new(const char* input)
 {
     return (Lexer){
         .input = input,
@@ -113,7 +115,7 @@ is_token_ending(char ch)
 static bool
 lexer_take_identifier(Lexer *lexer, char** identifier)
 {
-    char* original_input = lexer->input;
+    const char* original_input = lexer->input;
     int size = 0;
     char ch;
 
@@ -145,7 +147,7 @@ lexer_take_identifier(Lexer *lexer, char** identifier)
 static char*
 lexer_take_atom(Lexer *lexer)
 {
-    char* original_input = lexer->input;
+    const char* original_input = lexer->input;
     char ch;
     int size = 0;
 
@@ -177,7 +179,7 @@ lexer_take_atom(Lexer *lexer)
 static bool
 lexer_take_integer(Lexer *lexer, int* int_value)
 {
-    char* original_input = lexer->input;
+    const char* original_input = lexer->input;
     *int_value = 0;
 
     while (!is_token_ending(*lexer->input)) 
@@ -200,7 +202,7 @@ lexer_take_integer(Lexer *lexer, int* int_value)
 static bool
 lexer_take_float(Lexer* lexer, float* float_value)
 {
-    char* original_input = lexer->input;
+    const char* original_input = lexer->input;
     bool reached_decimals = false;
     int decimals_size = 1;
     int decimals = 0;

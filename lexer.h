@@ -27,14 +27,14 @@ typedef struct TokenListNode {
 } TokenListNode;
 
 typedef struct {
-    char* input;
+    const char* input;
     int line_count;
     int column_count;
 } Lexer;
 
-void token_print(Token* token);
+void token_print(const Token* token);
 void token_free(Token* token);
-Lexer lexer_new(char* input);
+Lexer lexer_new(const char* input);
 Token lexer_next_token(Lexer* lexer);
 
 #endif
