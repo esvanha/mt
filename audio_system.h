@@ -13,7 +13,7 @@ typedef struct {
 } AudioSystem;
 
 void audio_system_initialize(int sample_rate, EventBus* event_bus);
-void audio_system_start();
-void audio_system_stop();
+void audio_system_start(void);
+void audio_system_stop(void);
 
 #endif

@@ -6,7 +6,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
-#include <raylib.h>
+#include <unistd.h>
 
 Expression* expression_new(
     enum ExpressionType type,

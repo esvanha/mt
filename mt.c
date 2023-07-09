@@ -47,7 +47,7 @@ main(int argc, char* argv[])
         (play :D4)\
         (sleep 1)\
         (play :C4)\
-        (sleep 1)\
+        (sleep 2)\
         (play :B4)\
         (sleep 1)\
         (play :C4)\
@@ -60,11 +60,68 @@ main(int argc, char* argv[])
 
     audio_system_start();
 
-    Expression* expression = parser_parse_program(&parser);
-    EvaluationContext context = evaluation_context_new(&event_bus);
-    expression_evaluate(expression, &context);
+    InitWindow(200, 200, "");
+    SetTargetFPS(60);
 
-    sleep(5);
+//    Expression* expression = parser_parse_program(&parser);
+//    EvaluationContext context = evaluation_context_new(&event_bus);
+//    expression_evaluate(expression, &context);
+
+    int a_was_pressed = 0;
+    int b_was_pressed = 0;
+
+    while (!WindowShouldClose())
+    {
+        BeginDrawing(); EndDrawing();
+        
+        if (IsKeyPressed(KEY_A) && !a_was_pressed)
+        {
+            a_was_pressed = 1;
+
+            event_bus_notify(&event_bus, (EventMessage){
+                .type = EVENT_NOTE_ENABLE,
+                .event.note_enable = (EventNoteEnable){
+                    .amplitude = 0.8f,
+                    .hz = NOTE_A4
+                }
+            });
+        }
+        if (IsKeyPressed(KEY_B) && !b_was_pressed)
+        {
+            b_was_pressed = 1;
+
+            event_bus_notify(&event_bus, (EventMessage){
+                .type = EVENT_NOTE_ENABLE,
+                .event.note_enable = (EventNoteEnable){
+                    .amplitude = 0.8f,
+                    .hz = NOTE_B4
+                }
+            });
+        }
+
+        if (IsKeyReleased(KEY_A))
+        {
+            a_was_pressed = 0;
+
+            event_bus_notify(&event_bus, (EventMessage){
+                .type = EVENT_NOTE_DISABLE,
+                .event.note_disable = (EventNoteDisable){
+                    .hz = NOTE_A4
+                }
+            });
+        }
+        if (IsKeyReleased(KEY_B))
+        {
+            b_was_pressed = 0;
+
+            event_bus_notify(&event_bus, (EventMessage){
+                .type = EVENT_NOTE_DISABLE,
+                .event.note_disable = (EventNoteDisable){
+                    .hz = NOTE_B4
+                }
+            });
+        }
+    }
 
     audio_system_stop();
     parser_free(&parser);

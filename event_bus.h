@@ -8,14 +8,20 @@ typedef struct {
     float amplitude;
 } EventNoteEnable;
 
+typedef struct {
+    float hz;
+} EventNoteDisable;
+
 enum EventMessageType {
-    EVENT_NOTE_ENABLE
+    EVENT_NOTE_ENABLE,
+    EVENT_NOTE_DISABLE
 };
 
 typedef struct {
     enum EventMessageType type;
     union {
         EventNoteEnable note_enable;
+        EventNoteDisable note_disable;
     } event;
 } EventMessage;
 

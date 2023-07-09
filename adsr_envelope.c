@@ -2,6 +2,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+/*
+ *     |  |    |
+ *    /|\ |    |
+ *   / | \|____|
+ *  /  |  |    |\
+ * /   |  |    | \
+ *  A   D   S    R 
+ */
 ADSREnvelope*
 adsr_envelope_new()
 {
@@ -11,15 +19,15 @@ adsr_envelope_new()
         //
     }
 
-    adsr_envelope->attack_time_s = 0.100;
-    adsr_envelope->decay_time_s = 0.01;
-    adsr_envelope->release_time_s = 0.2;
+    adsr_envelope->attack_time_s = 1.0f;//0.100;
+    adsr_envelope->decay_time_s = 0.4f;//0.01;
+    adsr_envelope->release_time_s = 0.2f;
 
-    adsr_envelope->sustain_amplitude = 0.8;
-    adsr_envelope->start_amplitude = 1.0;
+    adsr_envelope->sustain_amplitude = 0.8f;
+    adsr_envelope->start_amplitude = 1.0f;
 
-    adsr_envelope->trigger_on_time_s = 0.0;
-    adsr_envelope->trigger_off_time_s = 0.0;
+    adsr_envelope->trigger_on_time_s = 0.0f;
+    adsr_envelope->trigger_off_time_s = 0.0f;
 
     adsr_envelope->note_enabled = false;
 
@@ -27,44 +35,44 @@ adsr_envelope_new()
 }
 
 void
-adsr_envelope_enable_note(ADSREnvelope* adsr_envelope, double time_on_ms)
+adsr_envelope_enable_note(ADSREnvelope* adsr_envelope, float time_on_s)
 {
-    adsr_envelope->trigger_on_time_s = time_on_ms;
+    adsr_envelope->trigger_on_time_s = time_on_s;
     adsr_envelope->note_enabled = true;
 }
 
 void
-adsr_envelope_disable_note(ADSREnvelope* adsr_envelope, double time_off_ms)
+adsr_envelope_disable_note(ADSREnvelope* adsr_envelope, float time_off_s)
 {
-    adsr_envelope->trigger_off_time_s = time_off_ms;
+    adsr_envelope->trigger_off_time_s = time_off_s;
     adsr_envelope->note_enabled = false;
 }
 
-double
-adsr_envelope_amplitude(ADSREnvelope* adsr_envelope, double time_ms)
+float
+adsr_envelope_amplitude(ADSREnvelope* adsr_envelope, float time_s)
 {
-    double amplitude = 0.0;
-    double lifetime_ms = time_ms - adsr_envelope->trigger_on_time_s;
-    printf("lifetime: %f\n", lifetime_ms);
+    float amplitude = 0.0f;
+    float lifetime_s = time_s - adsr_envelope->trigger_on_time_s;
+    //printf("lifetime: %f\n", lifetime_s);
 
     if (adsr_envelope->note_enabled) {
         // Attack
-        if (lifetime_ms <= adsr_envelope->attack_time_s)
+        if (lifetime_s <= adsr_envelope->attack_time_s)
         {
-            puts("attack");
-            amplitude = (lifetime_ms / adsr_envelope->attack_time_s) * adsr_envelope->start_amplitude;
-            printf("attack amplitude: %f\n", amplitude);
+            //puts("attack");
+            amplitude = (lifetime_s / adsr_envelope->attack_time_s) * adsr_envelope->start_amplitude;
+            //printf("attack amplitude: %f\n", amplitude);
         }
 
         // Decay
-        if (lifetime_ms > adsr_envelope->attack_time_s && lifetime_ms <= (adsr_envelope->attack_time_s + adsr_envelope->decay_time_s))
+        if (lifetime_s > adsr_envelope->attack_time_s && lifetime_s <= (adsr_envelope->attack_time_s + adsr_envelope->decay_time_s))
         {
-            puts("decay");
-            const double decay_time_progress = (
-                (lifetime_ms - adsr_envelope->attack_time_s)
+            //puts("decay");
+            const float decay_time_progress = (
+                (lifetime_s - adsr_envelope->attack_time_s)
                     / adsr_envelope->decay_time_s
             );
-            const double amplitude_gradient = (
+            const float amplitude_gradient = (
                 adsr_envelope->sustain_amplitude - adsr_envelope->start_amplitude
             );
 
@@ -76,24 +84,24 @@ adsr_envelope_amplitude(ADSREnvelope* adsr_envelope, double time_ms)
         }
 
         // Sustain
-        if (lifetime_ms > (adsr_envelope->attack_time_s + adsr_envelope->decay_time_s))
+        if (lifetime_s > (adsr_envelope->attack_time_s + adsr_envelope->decay_time_s))
         {
-            puts("sustain");
+            //puts("sustain");
             amplitude = adsr_envelope->sustain_amplitude;
         }
     } else {
         // Release
-        puts("release");
+        //puts("release");
         amplitude = (
-            ((time_ms - adsr_envelope->trigger_off_time_s) / adsr_envelope->release_time_s)
-            * (0.0 - adsr_envelope->sustain_amplitude)
+            ((time_s - adsr_envelope->trigger_off_time_s) / adsr_envelope->release_time_s)
+            * (0.0f - adsr_envelope->sustain_amplitude)
             + adsr_envelope->sustain_amplitude
         );
     }
 
-    if (amplitude <= 0.0001)
+    if (amplitude <= 0.0001f)
     {
-        amplitude = 0;
+        amplitude = 0.0f;
     }
     
     return amplitude;

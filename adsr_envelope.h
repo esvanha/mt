@@ -4,22 +4,22 @@
 #include <stdbool.h>
 
 typedef struct {
-    double attack_time_s;
-    double decay_time_s;
-    double release_time_s;
+    float attack_time_s;
+    float decay_time_s;
+    float release_time_s;
 
-    double sustain_amplitude;
-    double start_amplitude;
+    float sustain_amplitude;
+    float start_amplitude;
 
-    double trigger_on_time_s;
-    double trigger_off_time_s;
+    float trigger_on_time_s;
+    float trigger_off_time_s;
 
     bool note_enabled;
 } ADSREnvelope;
 
-ADSREnvelope* asdr_envelope_new();
-void adsr_envelope_enable_note(ADSREnvelope* adsr_envelope, double time_on_ms);
-void adsr_envelope_disable_note(ADSREnvelope* adsr_envelope, double time_off_ms);
-double adsr_envelope_amplitude(ADSREnvelope* adsr_envelope, double time_ms);
+ADSREnvelope* adsr_envelope_new();
+void adsr_envelope_enable_note(ADSREnvelope* adsr_envelope, float time_on_ms);
+void adsr_envelope_disable_note(ADSREnvelope* adsr_envelope, float time_off_ms);
+float adsr_envelope_amplitude(ADSREnvelope* adsr_envelope, float time_ms);
 
 #endif
