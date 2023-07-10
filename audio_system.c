@@ -64,64 +64,107 @@ audio_system_stop(void)
     CloseAudioDevice();
 }
 
-//static double
-//oscillator(double hz, double time)
-//{
-//    return sin(hz * time);
-//}
-
-float phase = 0.0f;
-ADSREnvelope* adsr_envelope = NULL;
+static float phase_a = 0.0f;
+static float phase_b = 0.0f;
+static ADSREnvelope* adsr_envelope_a = NULL;
+static ADSREnvelope* adsr_envelope_b = NULL;
+float note_a = 0.0f;
+float note_b = 0.0f; 
 
 static void
 callback(void* buffer, unsigned int frames)
 {
     EventMessage* event_message = NULL;
+    float passed_seconds = (float)seconds_passed();
 
     if (event_bus_poll(audio_system->event_bus, &event_message))
     {
         switch (event_message->type)
         {
             case EVENT_NOTE_ENABLE:
-                active_hz = event_message->event.note_enable.hz;
-                SAFE_FREE(adsr_envelope);
-                adsr_envelope = adsr_envelope_new();
-                adsr_envelope_enable_note(adsr_envelope, (float)seconds_passed());
+                if (adsr_envelope_a == NULL)
+                {
+                    note_a = event_message->event.note_enable.hz;
+                    adsr_envelope_a = adsr_envelope_new(0.1f, 0.05f, 0.08f, 0.5f, 0.6f);
+                    adsr_envelope_enable_note(adsr_envelope_a, passed_seconds);
+                }
+                else if (adsr_envelope_b == NULL)
+                {
+                    //}
+                    note_b = event_message->event.note_enable.hz;
+                    adsr_envelope_b = adsr_envelope_new(0.1f, 0.05f, 0.08f, 0.7f, 0.9f);
+                    adsr_envelope_enable_note(adsr_envelope_b, passed_seconds);
+                }
                 break;
             case EVENT_NOTE_DISABLE:
-                assert(adsr_envelope != NULL);
-                adsr_envelope_disable_note(adsr_envelope, (float)seconds_passed());
+                if ((int)event_message->event.note_disable.hz == (int)note_a)
+                {
+                    puts("note a");
+                    //note_a = 0.0f;
+                    assert(adsr_envelope_a != NULL);
+                    adsr_envelope_disable_note(adsr_envelope_a, passed_seconds);
+                }
+                else if ((int)event_message->event.note_disable.hz == (int)note_b)
+                {
+                    puts("note b");
+                    //note_b = 0.0f;
+                    assert(adsr_envelope_b != NULL);
+                    adsr_envelope_disable_note(adsr_envelope_b, passed_seconds);
+                }
+                else
+                {
+                    puts("else");
+                }
+                break;
+            default:
                 break;
         }
 
         SAFE_FREE(event_message);
     }
 
-    //if (adsr_envelope == NULL)
-    //    return;
-
     float* d = (float*)buffer;
-    float phase_delta = active_hz / 44100.0f;
+
+    memset(d, 0, frames);
+
+//    if (adsr_envelope_a == NULL)
+//    {
+//        memset(d, 0, frames);
+//        return;
+//    }
+
+    if (adsr_envelope_a != NULL && adsr_envelope_finished(adsr_envelope_a, passed_seconds))
+        SAFE_FREE(adsr_envelope_a);
+    if (adsr_envelope_b != NULL && adsr_envelope_finished(adsr_envelope_b, passed_seconds))
+        SAFE_FREE(adsr_envelope_b);
+
+    float phase_delta_a = note_a / 44100.0f;
+    float phase_delta_b = note_b / 44100.0f;
+
+    const float ampl_a =
+        (adsr_envelope_a == NULL)
+        ? 0.0f
+        : (float)adsr_envelope_amplitude(adsr_envelope_a, passed_seconds);
+    const float ampl_b =
+        (adsr_envelope_b == NULL)
+        ? 0.0f
+        : (float)adsr_envelope_amplitude(adsr_envelope_b, passed_seconds);
 
     for (unsigned int i = 0; i < frames; i++)
     {
-        if (adsr_envelope == NULL)
-        {
-            d[i] = 0.0f;
-        }
-        else
-        {
-//            seconds_passed();
-            float ampl = (float)adsr_envelope_amplitude(adsr_envelope, (float)seconds_passed());
-            d[i] = ampl * sinf(2 * PI * phase);
- //           printf("AMPLITUDE: %f\n", ampl);
-        }
- //       printf("d[%d] = %f\n", i, d[i]);
+        d[i] += ampl_a * sinf(2 * PI * phase_a);
+        d[i] += ampl_b * sinf(2 * PI * phase_b);
 
-        phase += phase_delta;
-        if (phase > 1.0f)
+        phase_a += phase_delta_a;
+        if (phase_a > 1.0f)
         {
-            phase -= 1.0f;
+            phase_a -= 1.0f;
+        }
+
+        phase_b += phase_delta_b;
+        if (phase_b > 1.0f)
+        {
+            phase_b -= 1.0f;
         }
     }
 }

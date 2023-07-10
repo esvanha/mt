@@ -3,28 +3,34 @@
 #include <stdio.h>
 
 /*
- *     |  |    |
+ *     |  |    |      Start amplitude
  *    /|\ |    |
- *   / | \|____|
+ *   / | \|____|      Sustain amplitude
  *  /  |  |    |\
  * /   |  |    | \
  *  A   D   S    R 
  */
+
 ADSREnvelope*
-adsr_envelope_new(void)
-{
+adsr_envelope_new(
+    float attack_time_s,
+    float decay_time_s,
+    float release_time_s,
+    float sustain_amplitude,
+    float start_amplitude
+) {
     ADSREnvelope* adsr_envelope = malloc(sizeof(ADSREnvelope));
     if (adsr_envelope == NULL)
     {
         //
     }
 
-    adsr_envelope->attack_time_s = 1.0f;//0.100;
-    adsr_envelope->decay_time_s = 0.4f;//0.01;
-    adsr_envelope->release_time_s = 0.2f;
+    adsr_envelope->attack_time_s = attack_time_s;
+    adsr_envelope->decay_time_s = decay_time_s;
+    adsr_envelope->release_time_s = release_time_s;
 
-    adsr_envelope->sustain_amplitude = 0.8f;
-    adsr_envelope->start_amplitude = 1.0f;
+    adsr_envelope->sustain_amplitude = sustain_amplitude;
+    adsr_envelope->start_amplitude = start_amplitude;
 
     adsr_envelope->trigger_on_time_s = 0.0f;
     adsr_envelope->trigger_off_time_s = 0.0f;
@@ -33,6 +39,74 @@ adsr_envelope_new(void)
 
     return adsr_envelope;
 }
+
+static inline float
+zero_below_threshold(float value)
+{
+    return (value <= 0.0001f) ? 0.0f : value;
+}
+
+bool
+adsr_envelope_finished(const ADSREnvelope* adsr_envelope, float time_s)
+{
+    const float time_since_trigger_off = (
+        time_s - adsr_envelope->trigger_off_time_s
+    );
+
+    return (
+        !adsr_envelope->note_enabled
+        && time_since_trigger_off > adsr_envelope->release_time_s
+    );
+}
+//enum ADSRStage
+//adsr_envelope_stage(const ADSREnvelope* adsr_envelope, float time_s)
+//{
+//    const float lifetime_s =
+//        (adsr_envelope->note_enabled)
+//        ? time_s - adsr_envelope->trigger_on_time_s
+//        : adsr_envelope->trigger_off_time_s - adsr_envelope->trigger_on_time_s;
+//    const float end_decay_time_s = (
+//        adsr_envelope->attack_time_s + adsr_envelope->decay_time_s
+//    );
+//
+//    if (adsr_envelope->note_enabled)
+//    {
+//        if (lifetime_s <= adsr_envelope->attack_time_s)
+//        {
+//            return STAGE_ATTACK;
+//        }
+//        else if (
+//            lifetime_s > adsr_envelope->attack_time_s
+//            && lifetime_s <= end_decay_time_s
+//        )
+//        {
+//            return STAGE_DECAY;
+//        }
+//        else if (lifetime_s > end_decay_time_s)
+//        {
+//            return STAGE_SUSTAIN;
+//        }
+//    }
+//    else
+//    {
+//        const float time_since_trigger_off = (
+//            time_s - adsr_envelope->trigger_off_time_s
+//        );
+//
+//        if (zero_below_threshold(lifetime_s) == 0.0f)
+//        {
+//            return STAGE_UNINITIATED;            
+//        }
+//        else if (time_since_trigger_off > adsr_envelope->release_time_s)
+//        {
+//            return STAGE_FINISHED;
+//        }
+//        else
+//        {
+//            return STAGE_RELEASE;
+//        }
+//    }
+//}
 
 void
 adsr_envelope_enable_note(ADSREnvelope* adsr_envelope, float time_on_s)
@@ -49,60 +123,115 @@ adsr_envelope_disable_note(ADSREnvelope* adsr_envelope, float time_off_s)
 }
 
 float
-adsr_envelope_amplitude(ADSREnvelope* adsr_envelope, float time_s)
+adsr_envelope_amplitude(const ADSREnvelope* adsr_envelope, float time_s)
 {
     float amplitude = 0.0f;
-    float lifetime_s = time_s - adsr_envelope->trigger_on_time_s;
-    //printf("lifetime: %f\n", lifetime_s);
+    const float lifetime_s = time_s - adsr_envelope->trigger_on_time_s;
+    const float end_decay_time_s = (
+        adsr_envelope->attack_time_s + adsr_envelope->decay_time_s
+    );
 
-    if (adsr_envelope->note_enabled) {
-        // Attack
-        if (lifetime_s <= adsr_envelope->attack_time_s)
-        {
-            //puts("attack");
-            amplitude = (lifetime_s / adsr_envelope->attack_time_s) * adsr_envelope->start_amplitude;
-            //printf("attack amplitude: %f\n", amplitude);
-        }
+ //   switch (adsr_envelope_stage(adsr_envelope, time_s))
+ //   {
+ //       case STAGE_UNINITIATED:
+ //          // puts("uninitiated");
+ //           amplitude = 0.0f;
+ //           break;
+ //       case STAGE_ATTACK:
+ //           //puts("attack");
+ //           amplitude = (
+ //               (lifetime_s / adsr_envelope->attack_time_s)
+ //               *
+ //               adsr_envelope->start_amplitude
+ //           );
+ //           break;
+ //       case STAGE_DECAY:
+ //          // puts("decay");
+ //           const float decay_time_progress = (
+ //               (lifetime_s - adsr_envelope->attack_time_s)
+ //               /
+ //               adsr_envelope->decay_time_s
+ //           );
+ //           const float amplitude_decrease = (
+ //               adsr_envelope->start_amplitude - adsr_envelope->sustain_amplitude
+ //           );
 
-        // Decay
-        if (lifetime_s > adsr_envelope->attack_time_s && lifetime_s <= (adsr_envelope->attack_time_s + adsr_envelope->decay_time_s))
-        {
-            //puts("decay");
-            const float decay_time_progress = (
-                (lifetime_s - adsr_envelope->attack_time_s)
-                    / adsr_envelope->decay_time_s
-            );
-            const float amplitude_gradient = (
-                adsr_envelope->sustain_amplitude - adsr_envelope->start_amplitude
-            );
+ //           amplitude = (
+ //               adsr_envelope->start_amplitude
+ //               -
+ //               decay_time_progress * amplitude_decrease
+ //           );
 
-            amplitude = (
-                decay_time_progress
-                * amplitude_gradient
-                + adsr_envelope->start_amplitude
-            );
-        }
+ //           break;
+ //       case STAGE_SUSTAIN:
+ //        //   puts("sustain");
+ //           amplitude = adsr_envelope->sustain_amplitude;
+ //           break;
+ //       case STAGE_RELEASE:
+ //         //  puts("RELEASE");
+ //           amplitude = (
+ //               amplitude
+ //               *
+ //               (
+ //                   1.0f
+ //                   -
+ //                   (time_s - adsr_envelope->trigger_off_time_s)
+ //                   /
+ //                   adsr_envelope->release_time_s
+ //               )
+ //           );
+ //           break;
+ //       case STAGE_FINISHED:
+ //          // puts("FINISHED");
+ //           break;
+ //   }
 
-        // Sustain
-        if (lifetime_s > (adsr_envelope->attack_time_s + adsr_envelope->decay_time_s))
-        {
-            //puts("sustain");
-            amplitude = adsr_envelope->sustain_amplitude;
-        }
-    } else {
-        // Release
-        //puts("release");
+    // Attack
+    if (lifetime_s <= adsr_envelope->attack_time_s)
+    {
+        if (adsr_envelope->attack_time_s == 0.0f)
+            return adsr_envelope->start_amplitude;
+
         amplitude = (
-            ((time_s - adsr_envelope->trigger_off_time_s) / adsr_envelope->release_time_s)
-            * (0.0f - adsr_envelope->sustain_amplitude)
-            + adsr_envelope->sustain_amplitude
+            (lifetime_s / adsr_envelope->attack_time_s)
+            *
+            adsr_envelope->start_amplitude
         );
     }
-
-    if (amplitude <= 0.0001f)
+    // Decay
+    else if (lifetime_s > adsr_envelope->attack_time_s && lifetime_s <= end_decay_time_s)
     {
-        amplitude = 0.0f;
+        const float decay_time_progress = (
+            (lifetime_s - adsr_envelope->attack_time_s)
+            /
+            adsr_envelope->decay_time_s
+        );
+        const float amplitude_decrease = (
+            adsr_envelope->start_amplitude - adsr_envelope->sustain_amplitude
+        );
+
+        amplitude = (
+            adsr_envelope->start_amplitude
+            -
+            decay_time_progress * amplitude_decrease
+        );
     }
-    
-    return amplitude;
+    // Sustain
+    else if (lifetime_s > end_decay_time_s)
+    {
+        amplitude = adsr_envelope->sustain_amplitude;
+    }
+
+    if (adsr_envelope->note_enabled)
+    {
+        return zero_below_threshold(amplitude);
+    }
+    else
+    {
+        return zero_below_threshold(
+            amplitude
+            *
+            (1.0f - (time_s - adsr_envelope->trigger_off_time_s) / adsr_envelope->release_time_s)
+        );
+    }
 }

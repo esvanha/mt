@@ -16,4 +16,9 @@ void audio_system_initialize(int sample_rate, EventBus* event_bus);
 void audio_system_start(void);
 void audio_system_stop(void);
 
+typedef struct {
+    void (*oscillator_fn)(float* wave_buffer, void* user_data);
+    void* user_data;
+} OscillatorCallback;
+
 #endif
